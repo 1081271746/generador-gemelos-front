@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Gemelos · Entrenamiento de negociación"
+description = "Frontend Angular para practicar negociaciones con gemelos de IA, gestionar escenarios y consultar análisis reales del backend FastAPI existente."
+version = "1.0.0"
+id = "artifacts/negotiation-front"
+router = "path"
+
+[[services]]
+name = "web"
+paths = ["/", "/api/backend", "/api/backend/ws/events"]
+localPort = 18559
+
+[services.development]
+run = "pnpm --filter @workspace/negotiation-front run dev"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/negotiation-front", "run", "build"]
+serve = "static"
+publicDir = "artifacts/negotiation-front/dist/negotiation-front/browser"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18559"
+BASE_PATH = "/"
