@@ -1,0 +1,4 @@
+{
+  "apiBaseUrl": "/api/backend",
+  "websocketUrl": "/api/backend/ws/events"
+}
