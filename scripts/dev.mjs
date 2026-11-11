@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
+import { generateConfig } from './runtime-config.mjs';
 
+await generateConfig();
 const port = process.env.PORT || '4200';
 const args = ['serve', '--host', '0.0.0.0', '--port', port, '--serve-path', process.env.BASE_PATH || '/', '--allowed-hosts', '--proxy-config', 'proxy.conf.json'];
 const child = spawn('ng', args, {stdio: 'inherit', shell: false});

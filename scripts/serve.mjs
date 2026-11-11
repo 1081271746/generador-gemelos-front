@@ -1,12 +1,19 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
+import { readConfig } from './runtime-config.mjs';
 
 const root = resolve('dist/negotiation-front/browser');
+const config = JSON.stringify(await readConfig(resolve(root, 'config.json')));
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2','.ico':'image/x-icon'};
 createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url || '/', 'http://localhost').pathname);
+    if (pathname === '/config.json') {
+      response.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'});
+      response.end(config);
+      return;
+    }
     const candidate = resolve(root, '.' + pathname);
     if (candidate !== root && !candidate.startsWith(root + sep)) { response.writeHead(403).end(); return; }
     let file = candidate;

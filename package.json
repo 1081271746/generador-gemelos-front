@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "start": "node scripts/dev.mjs",
-    "build": "ng build",
+    "build": "node scripts/runtime-config.mjs && ng build",
     "typecheck": "ngc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
     "serve": "node scripts/serve.mjs"
