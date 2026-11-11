@@ -28,6 +28,15 @@ const session = await request('/auth/login', {method: 'POST', body: {email: cred
 token = session.access_token;
 const user = await request('/auth/me');
 assert.equal(user.username, credentials.username);
+const socket = new WebSocket(base.replace(/^http/, 'ws') + '/ws/events');
+let realtimeEvent = null;
+socket.addEventListener('open', () => socket.send(JSON.stringify({token, negotiation_id: 0, after_sequence: 0})));
+socket.addEventListener('message', frame => {
+  const value = JSON.parse(String(frame.data));
+  if (value.type === 'event' && Number.isSafeInteger(value.sequence)) realtimeEvent = value;
+});
+socket.addEventListener('error', () => {});
+process.once('exit', () => socket.close());
 await request('/auth/me', {method: 'PUT', body: {username: credentials.username + '_edit', email: credentials.email}});
 const scenarioInput = {title: 'Validación de integración Angular', description: 'Escenario de prueba automatizada.',
   context: 'Renovación de un contrato de suministro.', objective: 'Acordar condiciones sostenibles.',
@@ -59,6 +68,10 @@ const resources = await request('/resources/exercises');
 assert.equal(resources.source, 'curated_examples');
 const events = await request('/events?after=0&limit=100&negotiation_id=' + negotiation.id);
 assert.ok(Array.isArray(events));
+for (let attempt = 0; !realtimeEvent && attempt < 30; attempt++) await new Promise(resolve => setTimeout(resolve, 100));
+assert.ok(realtimeEvent, 'El bridge WebSocket debe entregar un evento real del usuario.');
+socket.close();
+console.info('OK WebSocket autenticado con evento real del backend');
 await request('/scenarios/' + scenario.id, {method: 'DELETE', expected: 204});
 await request('/auth/password', {method: 'POST', body: {current_password: credentials.password, new_password: randomBytes(24).toString('base64url')}, expected: 204});
 await request('/auth/me', {expected: 401});
