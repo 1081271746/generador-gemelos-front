@@ -2,6 +2,8 @@
 
 Fuente: rama main de `1081271746/generador-gemelos-back`. Se analizaron README, esquemas, routers, autenticación, servicios, perfil y streaming. El backend no se modifica.
 
+Se contrastaron nuevamente las rutas de la copia local del repositorio con los servicios de mensajes, análisis y perfil del frontend. Se conservan `POST /messages/` (201, array de mensajes), `POST /negotiations/{id}/analysis` (201), `GET /analyses`, `GET /profile` y el bridge `/ws/events` existentes. Esta inspección de fuentes no demuestra que Gemini esté disponible ni que una URL pública exista.
+
 Los campos de las solicitudes y respuestas están reflejados en `src/app/shared/models/api.models.ts`. Los listados devuelven arrays directos, sin envoltorio ni total. El dashboard recorre la paginación real para calcular totales; no utiliza un endpoint de estadísticas inexistente.
 
 Endpoints existentes: POST /auth/register, POST /auth/login, GET/PUT /auth/me, POST /auth/password, POST /auth/logout; GET/POST /scenarios/, GET/PUT/DELETE /scenarios/{id}; GET/POST /negotiations/, GET/PATCH /negotiations/{id}; POST /messages/, GET /messages/{negotiation_id}; POST /negotiations/{id}/analysis; GET /analyses, GET /analyses/{id}; GET /profile; GET /recommendations; GET /resources/exercises; GET /events; WebSocket /ws/events.

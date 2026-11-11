@@ -27,6 +27,34 @@ Para el bridge WebSocket, el entorno de Uvicorn necesita un transporte compatibl
 
 ## Configuración de conexión
 
+La conexión puede definirse con **variables de entorno públicas**, sin editar el código:
+
+| Variable | Uso |
+|---|---|
+| `API_BASE_URL` | Base HTTP/HTTPS del backend existente, sin añadir endpoints |
+| `WEBSOCKET_URL` | Opcional; si se define la API, por defecto se deriva como `API_BASE_URL + /ws/events` |
+
+Para desarrollo directo en tu equipo:
+
+```sh
+API_BASE_URL=http://127.0.0.1:8000 pnpm dev
+```
+
+El navegador debe poder acceder a esa dirección y el backend debe permitir el origen del frontend. `127.0.0.1` en el navegador de otra persona apunta a **su propio equipo**, no al servidor de este workspace. Para el preview remoto conserva el proxy local predeterminado y ejecuta el backend en el mismo entorno del servidor Angular.
+
+Cuando exista una URL accesible, reemplaza el dominio de ejemplo:
+
+```sh
+API_BASE_URL=https://tu-backend.example.com pnpm build
+pnpm serve
+# O cambia la conexión al iniciar el servidor, sin recompilar:
+API_BASE_URL=https://tu-backend.example.com pnpm serve
+```
+
+`pnpm dev` y `pnpm build` generan `.runtime/config.json`; el build copia esa configuración pública a su salida. `pnpm serve` permite sobrescribirla al arrancar. En un alojamiento puramente estático se usan las variables **durante el build**; cambiar variables después no altera archivos ya publicados. Reinicia el servidor o reconstruye según corresponda. Estos scripts leen las variables del proceso; no cargan archivos `.env` automáticamente.
+
+Sin variables, se conservan los valores de `public/config.json`. Si solo defines `WEBSOCKET_URL`, la API conserva su valor del archivo. Si defines `API_BASE_URL`, el bridge se deriva de esa API salvo que también definas `WEBSOCKET_URL`. Las direcciones con credenciales, consultas o fragmentos se rechazan; ninguna otra variable del proceso se publica.
+
 `public/config.json` es la configuración pública de la aplicación y se carga antes de restaurar la sesión:
 
 ```json
@@ -49,7 +77,7 @@ El dominio anterior es un ejemplo, no un servicio disponible. Puedes tomar `publ
 
 **No pongas secretos, claves de Gemini, JWT ni contraseñas en estos archivos.** La clave Gemini pertenece exclusivamente a la configuración del backend. Este frontend no la solicita ni la almacena.
 
-El proxy de Angular existe **solo en desarrollo**. Antes de publicar el build estático, configura `public/config.json` con la URL HTTPS/WSS del backend existente o configura un reverse proxy del alojamiento para el prefijo `/api/backend`. No publiques esperando que el servidor estático ejecute FastAPI.
+El proxy de Angular existe **solo en desarrollo**. Antes de publicar el build estático, define `API_BASE_URL` durante el build, configura `public/config.json` con la URL HTTPS/WSS real o configura un reverse proxy del alojamiento para el prefijo `/api/backend`. No publiques esperando que el servidor estático ejecute FastAPI.
 
 ## Rutas y módulos
 

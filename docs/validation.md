@@ -1,5 +1,17 @@
 # Resultado de validación
 
+## Configuración por entorno: comprobación actual
+
+Por indicación del usuario, el alcance se ajustó a preparar la conexión configurable mientras no existe una URL pública de pruebas. No se considera completada la validación positiva de Gemini.
+
+- `pnpm test`: **55 pruebas aprobadas**, incluidos 14 casos de configuración por entorno.
+- `pnpm typecheck` y `pnpm build`: correctos.
+- Servidor estático: se verificó mediante HTTP que `API_BASE_URL` sobrescribe la configuración al arrancar, deriva `/ws/events`, entrega `config.json` sin caché y conserva el acceso a rutas Angular.
+- Preview Angular reiniciado: configuración local predeterminada servida correctamente y página de acceso visible sin errores en consola.
+- Backend real por el proxy: `/health` devolvió `{"database":"ok","gemini_configured":false}`. No se generaron turnos ni análisis positivos.
+- Contratos de mensajes, análisis y perfil contrastados con los routers existentes; no se modificaron fuentes del backend ni se añadieron endpoints o respuestas simuladas.
+- Las comprobaciones anteriores de integración y navegador se conservan abajo como evidencia histórica; no se repitió el recorrido autenticado en este cambio de configuración.
+
 ## Comprobaciones ejecutadas
 
 | Comprobación | Resultado |
