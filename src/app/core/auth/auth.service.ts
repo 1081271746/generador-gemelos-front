@@ -69,7 +69,12 @@ export class AuthService {
     this.accessToken = null;
     this.userState.set(null);
     this.readyState.set(true);
-    try { sessionStorage.removeItem(TOKEN_KEY); } catch { }
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      for (const key of Object.keys(sessionStorage)) {
+        if (key.startsWith('gemelos.pending.')) sessionStorage.removeItem(key);
+      }
+    } catch { }
     this.sessionChanged.next();
   }
   update(input: {username: string; email: string}): Observable<User> {

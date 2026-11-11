@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { RuntimeConfigService } from '../config/runtime-config.service';
@@ -33,13 +33,19 @@ export class EventsService {
   private retries = 0;
 
   constructor() {
-    this.auth.sessionChanged.subscribe(() => {
+    const sessionSubscription = this.auth.sessionChanged.subscribe(() => {
       this.disconnect();
       this.cursors.clear();
       this.userId = null;
     });
-    window.addEventListener('online', () => {
+    const reconnect = () => {
       if (this.state() === 'unavailable' && this.auth.user()) this.connect(this.negotiationId);
+    };
+    window.addEventListener('online', reconnect);
+    inject(DestroyRef).onDestroy(() => {
+      sessionSubscription.unsubscribe();
+      window.removeEventListener('online', reconnect);
+      this.disconnect();
     });
   }
   connect(negotiationId = 0): void {
