@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { ApiService } from '../src/app/core/services/api.service';
@@ -55,6 +55,44 @@ describe('Servicios Angular y contrato FastAPI', () => {
     expect(config.owns('/api/backend-other')).toBe(false);
     expect(config.owns('/api/backend/profile')).toBe(true);
   });
+  it('restaura una sesión persistida comprobándola con el servidor', () => {
+    const token = validToken();
+    sessionStorage.setItem('gemelos.session', token);
+    const auth = TestBed.inject(AuthService);
+    auth.restore().subscribe();
+    const request = http.expectOne(base + '/auth/me');
+    expect(request.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+    request.flush(user);
+    expect(auth.user()).toEqual(user);
+    expect(auth.ready()).toBe(true);
+  });
+  it('elimina borradores privados al salir sin borrar datos ajenos', () => {
+    sessionStorage.setItem('gemelos.pending.1.4', '{"content":"draft"}');
+    sessionStorage.setItem('unrelated-key', 'keep');
+    const auth = TestBed.inject(AuthService);
+    auth.clear();
+    expect(sessionStorage.getItem('gemelos.pending.1.4')).toBeNull();
+    expect(sessionStorage.getItem('unrelated-key')).toBe('keep');
+    expect(auth.user()).toBeNull();
+    expect(auth.token()).toBeNull();
+  });
+  it('no crea sesión cuando el servidor rechaza las credenciales', () => {
+    const auth = TestBed.inject(AuthService);
+    let failed = false;
+    auth.login({email: user.email, password: 'wrong-password'}).subscribe({error: () => failed = true});
+    http.expectOne(base + '/auth/login').flush({detail: 'Invalid credentials'}, {status: 401, statusText: 'Unauthorized'});
+    expect(failed).toBe(true);
+    expect(auth.token()).toBeNull();
+    expect(auth.user()).toBeNull();
+    http.expectNone(base + '/auth/me');
+  });
+  it('no transmite JWT a una solicitud externa aunque exista sesión', () => {
+    sessionStorage.setItem('gemelos.session', validToken());
+    TestBed.inject(HttpClient).get('https://external.example/resource').subscribe();
+    const request = http.expectOne('https://external.example/resource');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
+  });
   it('recorre todas las páginas sin inventar estadísticas', () => {
     let records: number[] = [];
     TestBed.inject(ApiService).all<number>('/scenarios/', 2).subscribe(value => records = value);
@@ -62,7 +100,7 @@ describe('Servicios Angular y contrato FastAPI', () => {
     http.expectOne(base + '/scenarios/?offset=2&limit=2').flush([3]);
     expect(records).toEqual([1, 2, 3]);
   });
-  it('crea y edita exactamente los ocho campos del escenario', () => {
+  it('crea y edita exactamente los siete campos del escenario', () => {
     const service = TestBed.inject(ScenariosService);
     service.create(scenario).subscribe();
     const create = http.expectOne(base + '/scenarios/');
